@@ -35,7 +35,9 @@
       password1: password1.value,
       password2: password2.value
     })
+    router.push('/accounts/')
 
+    console.log(`result = ${result}`)
 
     // 에러 처리 로직 강화
     if (result.success){

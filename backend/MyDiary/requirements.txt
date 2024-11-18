@@ -7,12 +7,14 @@ defusedxml==0.7.1
 dj-rest-auth==7.0.0
 Django==4.2.16
 django-allauth==0.61.1
+django-cors-headers==4.6.0
 djangorestframework==3.15.2
+djangorestframework-jwt==1.11.0
 djangorestframework-simplejwt==5.3.1
 idna==3.10
 oauthlib==3.2.2
 pycparser==2.22
-PyJWT==2.9.0
+PyJWT==1.7.1
 python3-openid==3.2.0
 requests==2.32.3
 requests-oauthlib==2.0.0

@@ -6,7 +6,7 @@ import { RouterLink, RouterView } from 'vue-router'
   <header>
     <div class="wrapper">
       <nav>
-        <RouterLink :to="{name: 'user'}">Login</RouterLink>
+        <RouterLink :to="{name: 'login'}">Login</RouterLink>
         <RouterLink :to="{name: 'signup'}">Sign Up</RouterLink>
       </nav>
     </div>

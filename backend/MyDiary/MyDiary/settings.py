@@ -158,10 +158,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
     #Authentication
-    'DEFAULT_AUTHENTICATION_CLASSES': [
+    'DEFAULT_AUTHENTICATION_CLASSES': (
         # 'rest_framework.authentication.TokenAuthentication'
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ]
+    )
 }
 
 # JWT 설정
