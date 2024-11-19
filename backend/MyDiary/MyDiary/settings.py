@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 from datetime import timedelta
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,7 +39,8 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'rest_framework_simplejwt',
-    'corsheaders'
+    'corsheaders',
+    'django_seed',
 ]
 
 # Django sites 프레임워크 관련 설정
@@ -177,5 +179,8 @@ REST_AUTH = {
     'JWT_AUTH_REFRESH_COOKIE': 'my-refresh-token',
 }
 
-
 AUTH_USER_MODEL = 'accounts.CustomUser'
+
+# API KEY 관련
+load_dotenv()       # .env 파일 로드
+TMDB_API_KEY = os.getenv('TMDB_API_KEY')
