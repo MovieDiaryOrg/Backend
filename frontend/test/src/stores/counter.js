@@ -11,7 +11,7 @@ export const useCounterStore = defineStore('counter', () => {
       isLoading.value = true
       error.value = null
       
-      const response = await axios.post('http://127.0.0.1:8000/accounts/login/', {
+      const response = await axios.post('http://127.0.0.1:8000/accounts/dj-rest-auth/login/', {
         username: loginData.username,
         password: loginData.password,
       })
@@ -45,6 +45,29 @@ export const useCounterStore = defineStore('counter', () => {
     }
   }
 
+
+  const logout = async function(){
+    isLoading.value = true
+    error.value = null
+    
+    try {
+      await axios.post('http://127.0.0.1:8000/accounts/dj-rest-auth/logout/')
+      return {
+        success: true, 
+        message: '로그아웃되었습니다.'
+      }
+    } catch (err) {
+      error.value = err.response?.data?.detail || '로그아웃 중 오류가 발생했습니다.'
+      return {
+        success: false,
+        message: error.value
+      } 
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+
   const signUp = async function(signUpData) {
     try {
       // 비밀번호 일치 여부 확인
@@ -55,7 +78,7 @@ export const useCounterStore = defineStore('counter', () => {
       isLoading.value = true
       error.value = null
       
-      const response = await axios.post('http://127.0.0.1:8000/accounts/registration/', {
+      const response = await axios.post('http://localhost:8000/accounts/dj-rest-auth/registration/', {
         username: signUpData.username,
         password1: signUpData.password1,  // password1을 사용
         password2: signUpData.password2,  // password2을 사용 -> dj_rest_auth는 password confirmation을 요구하므로
@@ -95,6 +118,7 @@ export const useCounterStore = defineStore('counter', () => {
   return {  
     signUp,
     login, 
+    logout,
     error,
     isLoading
   }
