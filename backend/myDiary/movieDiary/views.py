@@ -33,11 +33,13 @@ class MovieJournalViewSet(ModelViewSet):
 
 
     def create_ai_analystic(self):
-
+        """
+        OpenAI API를 이용해 추천 영화 및 그림 생성 프롬프트 생성
+        """
 
     def create_ai_img(self):
         """
-        OpenAI API를 이용해 그림 생성
+        DALL.E3를 이용해 그림 생성
         """
 
     # 로그인한 사용자의 다이어리 목록 반환
