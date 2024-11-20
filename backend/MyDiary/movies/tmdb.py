@@ -12,7 +12,7 @@ sys.path.append(project_root)
 
 
 # Django 환경 설정 초기화
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'MyDiary.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'myDiary.settings')
 django.setup()
 
 
@@ -40,7 +40,7 @@ def pull_genres():
     for item in data['genres']:
         try:
             dict = {
-                'model': 'MovieDiary.genre',
+                'model': 'movies.genre',
                 'pk': item['id'],
                 'fields': {
                     'name': item['name']
@@ -74,7 +74,7 @@ def pull_kr_movies(pg_num):
     for item in data['results']:
         try:
             dict1 = {
-                'model': 'MovieDiary.movie',
+                'model': 'movies.movie',
                 'pk': item['id'],
                 'fields': {
                     "title": item['title'],
@@ -89,7 +89,7 @@ def pull_kr_movies(pg_num):
             
             for gr in item['genre_ids']:
                 dict2 = {
-                    'model': 'MovieDiary.moviegenre',
+                    'model': 'movies.moviegenre',
                     'fields': {
                         'movie_id': item['id'],
                         'genre_id' : int(gr)
@@ -121,7 +121,7 @@ def pull_eng_movies():
     for item in data['results']:
         try:
             dict1 = {
-                'model': 'MovieDiary.movie',
+                'model': 'movies.movie',
                 'pk': item['id'],
                 'fields': {
                     "title": item['title'],
@@ -136,7 +136,7 @@ def pull_eng_movies():
             
             for gr in item['genre_ids']:
                 dict2 = {
-                    'model': 'MovieDiary.moviegenre',
+                    'model': 'movies.moviegenre',
                     'fields': {
                         'movie_id': item['id'],
                         'genre_id' : int(gr)

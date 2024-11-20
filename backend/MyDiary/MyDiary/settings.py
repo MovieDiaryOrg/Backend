@@ -23,7 +23,8 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'accounts',
-    'MovieDiary',
+    'movies',
+    'movieDiary',
     'rest_framework',
     'rest_framework.authtoken',
     'django.contrib.admin',
@@ -75,7 +76,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 
-ROOT_URLCONF = 'MyDiary.urls'
+ROOT_URLCONF = 'myDiary.urls'
 
 TEMPLATES = [
     {
@@ -93,7 +94,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'MyDiary.wsgi.application'
+WSGI_APPLICATION = 'myDiary.wsgi.application'
 
 
 # Database
