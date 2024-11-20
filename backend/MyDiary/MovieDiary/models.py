@@ -1,22 +1,44 @@
 from django.db import models
+from accounts.models import CustomUser
+from movies.models import Movie
 
 # Create your models here.
-class Movie(models.Model):
-    tmdb_id = models.IntegerField(primary_key=True, default=0)
+class MovieJournal(models.Model):
     title = models.CharField(max_length=100)
-    release_date = models.DateField(null=True)
-    description = models.TextField()
-    original_language = models.CharField(max_length=50, null=True)
-    poster_path = models.TextField(null=True)
-    vote_average = models.DecimalField(max_digits=15, decimal_places=1, default=0)
-    adult = models.BooleanField(default=False)
+    content = models.TextField()
+    ai_img = models.ImageField(upload_to='ai_images/', null=True, blank=True)
+    watched_date = models.DateField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
+    recommended_list = models.JSONField(default=list)        # 기본값을 빈 리스트로 설정함
 
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    # 해당 영화에 대한 감상문이 하나라도 작성되어 있으면 영화 정보를 삭제할 수 없도록 함
+    movie = models.ForeignKey(Movie, on_delete=models.PROTECT)
+    
 
-class Genre(models.Model):
-    genre_id = models.IntegerField(primary_key=True, default=0)
-    name = models.CharField(max_length=100)
-
-
-class MovieGenre(models.Model):
+class MovieEvaluation(models.Model):
+    evaluation = models.CharField(max_length=50, blank=False)          # 'good/not bad/bad' 중에 선택되어 입력
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
-    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
+
+
+class Recommended(models.Model):
+    reason = models.TextField()
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
+    movie_journal = models.ForeignKey(MovieJournal, on_delete=models.CASCADE)
+
+
+class LikedJournal(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    movie_journal = models.ForeignKey(MovieJournal, on_delete=models.CASCADE)
+
+
+class JournalComment(models.Model):
+    title = models.CharField(max_length=100)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
+
+    user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True)
+    movie_journal = models.ForeignKey(MovieJournal, on_delete=models.CASCADE)

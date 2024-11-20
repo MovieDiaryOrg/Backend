@@ -6,7 +6,8 @@ from rest_framework import status
 from .serializers import UserRegisterSerializer, UserLoginSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
-# 왜 클래스로 생성했는지 이해 안 감
+# CBV(Class-Based View, 클래스 기반 뷰)
+# 클래스 매개변수에 LoginRequiredMixin을 추가하면, 인증된 사용자만 뷰에 접근하도록 할 수 있다.
 class UserRegisterAPIView(APIView):
     def post(self, request: Request):
         serializer = UserRegisterSerializer(data=request.data)
