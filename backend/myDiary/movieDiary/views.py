@@ -10,7 +10,7 @@ from movies.models import Movie, Genre, MovieGenre
 from django.conf import settings
 from openai import OpenAI
 import json
-
+from django.core.exceptions import ValidationError
 
 """
 ModelViewSet은 기본적인 CRUD 작업을 제공하며, 
@@ -48,8 +48,6 @@ class MovieJournalViewSet(ModelViewSet):
             self.movie_evaluation = rslt['movieEvaluation']
         else:
             self.movie_journal = rslt
-                
-            # self.movie_journal = rslt['movieJournal']             # MovieJournal 객체 생성 및 DB 저장
         print(f'MovieJournal 객체가 생성되었습니다: {self.movie_journal}')
 
         # OpenAI API를 이용해 감상문 분석    
@@ -63,7 +61,6 @@ class MovieJournalViewSet(ModelViewSet):
         }
 
         headers = self.get_success_headers(response_data)
-        print(f'여기도 성공')
         return Response(response_data, status=status.HTTP_201_CREATED, headers=headers)
     
     
