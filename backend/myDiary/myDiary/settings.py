@@ -185,3 +185,4 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 # API KEY 관련
 load_dotenv()       # .env 파일 로드
 TMDB_API_KEY = os.getenv('TMDB_API_KEY')
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')

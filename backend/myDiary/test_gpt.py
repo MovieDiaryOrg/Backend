@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+from csv import excel_tab
 from openai import OpenAI
 import json
 
@@ -66,4 +68,15 @@ response = client.chat.completions.create(
 response_content = response.choices[0].message.content
 print(f'response_content = {response_content}')
 
-original_language = json.loads(response_content)[""]
+try:
+    parsed_content = json.loads(response_content)
+except json.JSONDecodeError as e:
+    print(f'JSON 파싱 중 오류 발생 : {e}')
+
+analysis = json.loads(response_content)["analysis"]
+movie_recommend = json.loads(response_content)["movie_recommendations"]
+dalle_prompt = json.loads(response_content)["dalle_prompt"]
+
+print(f'analysis = {analysis}')
+print(f'movie_recommend = {movie_recommend}')
+print(f'dalle_prompt = {dalle_prompt}')
