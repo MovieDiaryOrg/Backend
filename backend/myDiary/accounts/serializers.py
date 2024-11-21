@@ -1,50 +1,110 @@
 from django.contrib.auth import get_user_model, authenticate
 from rest_framework import serializers
-from backend.MyDiary.accounts.models import CustomUser
+from .models import CustomUser
 from rest_framework_simplejwt.tokens import RefreshToken
+from dj_rest_auth.serializers import UserDetailsSerializer
+from dj_rest_auth.registration.serializers import RegisterSerializer
 
 # 순환 참조를 막기 위해 사용함 (완전히 이해는 안됨)
+# AUTH_USER_MODEL에 설정된 CustomUser 가져옴
 User = get_user_model()
 
-class UserRegisterSerializer(serializers.ModelSerializer):
-    password1 = serializers.CharField(write_only=True)
-    password2 = serializers.CharField(write_only=True)
+# class UserRegisterSerializer(serializers.ModelSerializer):
+#     password1 = serializers.CharField(write_only=True)
+#     password2 = serializers.CharField(write_only=True)
 
-    class Meta:
-        model = User        # CustomUser가 이미 AUTH_USER_MODEL에 설정되었으므로
-        fields = ['username', 'password1', 'password2', 'first_name', 'last_name', 'email', 'phone', 'image']
-        extra_kwargs = {
-            'password': {'write_only': True},
-            'image': {'required': False}
-        }
+#     class Meta:
+#         model = User        # CustomUser가 이미 AUTH_USER_MODEL에 설정되었으므로
+#         fields = ['username', 'password1', 'password2', 'first_name', 'last_name', 'email', 'phone', 'image']
+#         extra_kwargs = {
+#             'password': {'write_only': True},
+#             'image': {'required': False}
+#         }
+
+#     def validate(self, data):
+#         if data['password1'] != data['password2']:
+#             raise serializers.ValidationError({"password": "비밀번호가 일치하지 않습니다."})
+        
+#         image = data.get('image')
+#         if image and image.size > 5 * 1024 * 1024: 
+#             raise serializers.ValidationError({
+#                 "image": "이미지 파일은 5MB 이하로 업로드 가능합니다."
+#             })
+        
+#         return data
+
+#     def create(self, validated_data):
+#         password = validated_data.pop('password1')
+#         validated_data.pop('password2')
+
+#         # django의 create_user() 메서드를 통해 비밀번호 자동 해싱
+#         user = User.objects.create_user(
+#             username = validated_data['username'],
+#             password = password,   # 이 필드를 create_user에서 해싱함
+#             first_name = validated_data.get('first_name', ''),
+#             last_name = validated_data.get('last_name', ''),
+#             email = validated_data.get('email'),
+#             phone = validated_data.get('phone', ''),
+#             # 이미지 필드는 없는 경우, 기본값 None 설정
+#             image = validated_data.get('image', None)
+#         )
+#         return user
+
+
+class UserRegisterSerializer(RegisterSerializer):
+    # 추가 필드
+    # models.py에서 CustomUser에 phone과 image 필드가 정의되어 있어도,
+    # serializer 클래스에 phone과 image 필드를 명시적으로 정의해줘야 하는데
+    # 이는 Serializer가 데이터 검증과 직렬화를 담당하기 떄문
+    first_name = serializers.CharField(required=True, max_length=30)
+    last_name = serializers.CharField(required=True, max_length=30)
+    phone = serializers.CharField(required=True, max_length=30)
+    # class Meta():
+    #     model = User        # CustomUser가 이미 AUTH_USER_MODEL에 설정되었으므로
+    #     fields = ['username', 'password1', 'password2', 'first_name', 'last_name', 'email', 'phone']
+
 
     def validate(self, data):
+        # 비밀번호 확인 및 추가 검증 로직
         if data['password1'] != data['password2']:
             raise serializers.ValidationError({"password": "비밀번호가 일치하지 않습니다."})
         
-        image = data.get('image')
-        if image and image.size > 5 * 1024 * 1024: 
-            raise serializers.ValidationError({
-                "image": "이미지 파일은 5MB 이하로 업로드 가능합니다."
-            })
+        # image = data.get('image')
+        # if image and image.size > 5 * 1024 * 1024: 
+        #     raise serializers.ValidationError({
+        #         "image": "이미지 파일은 5MB 이하로 업로드 가능합니다."
+        #     })
         
-        return data
+        # 부모 클래스의 validate 메서드 호출 결과를 반환
+        # (validate 메서드가 부모 클래스에서 정의한 기본 검증 로직을 유지하면서 추가적인 검증 로직을 더할 때 사용)
+        return super().validate(data)  
+        # 따라서 부모 클래스가 검증된 데이터를 반환하게 됨
 
-    def create(self, validated_data):
-        password = validated_data.pop('password1')
-        validated_data.pop('password2')
 
-        # django의 create_user() 메서드를 통해 비밀번호 자동 해싱
-        user = User.objects.create_user(
-            username = validated_data['username'],
-            password = password,   # 이 필드를 create_user에서 해싱함
-            first_name = validated_data.get('first_name', ''),
-            last_name = validated_data.get('last_name', ''),
-            email = validated_data.get('email'),
-            phone = validated_data.get('phone', ''),
-            # 이미지 필드는 없는 경우, 기본값 None 설정
-            image = validated_data.get('image', None)
-        )
+    # def save(self, validated_data):
+    #     password = validated_data.pop('password1')
+    #     validated_data.pop('password2')
+
+    #     # django의 create_user() 메서드를 통해 비밀번호 자동 해싱
+    #     user = User.objects.create_user(
+    #         username = validated_data['username'],
+    #         password = password,   # 이 필드를 create_user에서 해싱함
+    #         first_name = validated_data.get('first_name', ''),
+    #         last_name = validated_data.get('last_name', ''),
+    #         email = validated_data.get('email'),
+    #         phone = validated_data.get('phone', ''),
+    #         # 이미지 필드는 없는 경우, 기본값 None 설정
+    #         image = validated_data.get('image', None)
+    #     )
+    #     return user
+
+    def save(self, request):
+        user = super().save(request)
+        user.first_name = self.validated_data.get('first_name', '')
+        user.last_name = self.validated_data.get('last_name', '')
+        user.phone = self.validated_data.get('phone', '')
+        user.save()
+
         return user
 
 
@@ -79,3 +139,7 @@ class UserLoginSerializer(serializers.Serializer):
         # 인증된 사용자 반환
         data['user'] = user
         return data
+    
+class CustomUserDetailSerializer(UserDetailsSerializer):
+    class Meta(UserDetailsSerializer.Meta):
+        fields = ['username', 'email', 'phone', 'first_name', 'last_name']

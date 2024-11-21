@@ -8,25 +8,27 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 # CBV(Class-Based View, 클래스 기반 뷰)
 # 클래스 매개변수에 LoginRequiredMixin을 추가하면, 인증된 사용자만 뷰에 접근하도록 할 수 있다.
-class UserRegisterAPIView(APIView):
-    def post(self, request: Request):
-        serializer = UserRegisterSerializer(data=request.data)
+# class UserRegisterAPIView(APIView):
+#     def post(self, request: Request):
+#         print("gg")
+#         serializer = UserRegisterSerializer(data=request.data)
 
-        if serializer.is_valid():
-            user = serializer.save()
-            refresh_token = RefreshToken.for_user(user)     # JWT 토큰 생성
-            return Response(
-                {
-                    'user': serializer.data,
-                    'message': 'Register successful',
-                    'token': {
-                        'access': str(refresh_token.access_token),
-                        'refresh': str(refresh_token)
-                    },
-                },
-                status = status.HTTP_201_CREATED
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#         if serializer.is_valid():
+#             user = serializer.save()
+#             print(f'user = {user}')
+#             refresh_token = RefreshToken.for_user(user)     # JWT 토큰 생성
+#             return Response(
+#                 {
+#                     'user': serializer.data,
+#                     'message': 'Register successful',
+#                     'token': {
+#                         'access': str(refresh_token.access_token),
+#                         'refresh': str(refresh_token)
+#                     },
+#                 },
+#                 status = status.HTTP_201_CREATED
+#             )
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserLoginAPIView(APIView):

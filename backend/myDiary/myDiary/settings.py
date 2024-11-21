@@ -52,6 +52,12 @@ REST_AUTH = {
     'USE_JWT': True,
     'JWT_AUTH_COOKIE': 'my-app-auth',
     'JWT_AUTH_REFRESH_COOKIE': 'my-refresh-token',
+    'USER_DETAILS_SERIALIZERS': 'accounts.serializers.CustomUserDetailSerializers',
+    'REGISTER_SERIALIZER': 'accounts.serializers.UserRegisterSerializer',
+}
+
+REST_AUTH_VIEWS = {
+    'USER_DETAILS_VIEW': 'accounts.views.CustomUserView',
 }
 
 # django-allauth 설정
@@ -171,13 +177,6 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=3),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
-}
-
-# dj-rest-auth 설정
-REST_AUTH = {
-    'USE_JWT': True,
-    'JWT_AUTH_COOKIE': 'my-app-auth',
-    'JWT_AUTH_REFRESH_COOKIE': 'my-refresh-token',
 }
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
