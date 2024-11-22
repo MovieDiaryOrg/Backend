@@ -47,13 +47,13 @@
   const last_name = ref('')
   const email = ref('')
   const phone = ref('')
-  const image = ref(null)
+  const profile_image = ref(null)
 
   const onImageChange = (e) => {
     const file = e.target.files[0]
     
     if (file) {
-      image.value = file
+      profile_image.value = file
     }
   }
 
@@ -66,7 +66,7 @@
       last_name: last_name.value,
       email: email.value,
       phone: phone.value,
-      image: image.value
+      profile_image: profile_image.value || null
     })
 
     console.log(`result = ${result}`)

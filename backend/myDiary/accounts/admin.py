@@ -12,10 +12,11 @@ class UserAdmin(DefaultUserAdmin):
         "first_name",
         "last_name",
         "phone",
+        "profile_image",
         "is_active",
         "is_staff",
         "is_superuser",
-        "last_login",
+        "last_login"
     )
     list_filter = ("is_active", "is_staff", "is_superuser")
     search_fields = ("email", "username", "first_name", "last_name", "phone")
@@ -53,7 +54,7 @@ class UserAdmin(DefaultUserAdmin):
             None,
             {
                 "classes": ("wide",),
-                "fields": ("email", "username", "first_name", "last_name", "phone", "password1", "password2"),
+                "fields": ("email", "username", "first_name", "last_name", "phone", "password1", "password2", "profile_image"),
             },
         ),
     )
