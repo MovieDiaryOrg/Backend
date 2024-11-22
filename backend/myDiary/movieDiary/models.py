@@ -26,19 +26,18 @@ class MovieEvaluation(models.Model):
 class Recommended(models.Model):
     reason = models.TextField()
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
-    movie_journal = models.ForeignKey(MovieJournal, on_delete=models.CASCADE)
+    movie_journal = models.ForeignKey(MovieJournal, on_delete=models.CASCADE, related_name='recommends')
 
 
 class LikedJournal(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    movie_journal = models.ForeignKey(MovieJournal, on_delete=models.CASCADE)
+    movie_journal = models.ForeignKey(MovieJournal, on_delete=models.CASCADE, related_name='likes')
 
 
 class JournalComment(models.Model):
-    title = models.CharField(max_length=100)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
 
     user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True)
-    movie_journal = models.ForeignKey(MovieJournal, on_delete=models.CASCADE)
+    movie_journal = models.ForeignKey(MovieJournal, on_delete=models.CASCADE, related_name='comments')

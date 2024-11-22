@@ -1,3 +1,5 @@
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -11,6 +13,9 @@ from .serializers import CustomUserUpdateSerializer
 from django.contrib.auth import logout
 from rest_framework_simplejwt.tokens import RefreshToken
 import logging
+from .models import CustomUser
+from rest_framework.decorators import api_view
+
 
 # CBV(Class-Based View, 클래스 기반 뷰)
 # 클래스 매개변수에 LoginRequiredMixin을 추가하면, 인증된 사용자만 뷰에 접근하도록 할 수 있다.
@@ -155,3 +160,20 @@ class UserDeleteView(APIView):
                 'message': '회원 탈퇴 처리 중 오류가 발생했습니다.',
                 'detail': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST', 'DELETE'])
+@login_required
+def follow(request, pk):
+    if request.method == 'POST':
+        user_to_follow = get_object_or_404(CustomUser, pk=pk)
+
+        if request.user != user_to_follow:
+            if user_to_follow in request.user.followings.all():
+                # 언팔로우 처리
+                request.user.followings.remove(user_to_follow)
+                return Response("언팔로우", status=status.HTTP_200_OK)
+            else:
+                # 팔로우 처리
+                request.user.followings.add(user_to_follow)
+                return Response("팔로잉", status=status.HTTP_200_OK)
+

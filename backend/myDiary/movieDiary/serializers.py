@@ -29,15 +29,23 @@ class TestSerializer(serializers.ModelSerializer):
     title = serializers.CharField(max_length=100)
     content = serializers.CharField()
     watched_date = serializers.DateField()
+    created_at = serializers.DateTimeField()
+    modified_at = serializers.DateTimeField()
     movie = serializers.PrimaryKeyRelatedField(queryset=Movie.objects.all())
-
-    # MovieEvaluation 관련 필드
-    # 전체 자릿수: 4자, 소수점 아래 자릿수: 2자
-    evaluation = serializers.DecimalField(max_digits=4, decimal_places=2, required=True)
+    ai_img = serializers.CharField()
+    evaluation = serializers.SerializerMethodField()
 
     class Meta:
         model = MovieJournal  # 어떤 모델을 기반으로 하는지 지정 -> 왜 꼭 해야하지?
-        fields = ['title', 'content', 'watched_date', 'movie', 'evaluation']  # 포함할 필드 명시
+        fields = ['title', 'content', 'watched_date', 'created_at', 'modified_at', 'movie', 'ai_img', 'evaluation']  # 포함할 필드 명시
+        read_only_fields = ['created_at', 'modified_at', 'ai_img', 'evaluation'] 
+
+    def get_evaluation(self, obj):
+        # MovieEvaluation에서 해당 MovieJournal과 관련된 평가를 가져옴
+        evaluation = MovieEvaluation.objects.filter(
+            user=obj.user, movie=obj.movie
+        ).first()  # 한 개의 평가만 가져옴 (필요 시 수정 가능)
+        return evaluation.evaluation if evaluation else None
 
     # save() 메서드 실행 시 자동으로 호출됨
     def create(self, validated_data):
