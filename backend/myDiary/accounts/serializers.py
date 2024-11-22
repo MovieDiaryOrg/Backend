@@ -11,48 +11,6 @@ from django.core.files.storage import default_storage
 # AUTH_USER_MODEL에 설정된 CustomUser 가져옴
 User = get_user_model()
 
-# class UserRegisterSerializer(serializers.ModelSerializer):
-#     password1 = serializers.CharField(write_only=True)
-#     password2 = serializers.CharField(write_only=True)
-
-#     class Meta:
-#         model = User        # CustomUser가 이미 AUTH_USER_MODEL에 설정되었으므로
-#         fields = ['username', 'password1', 'password2', 'first_name', 'last_name', 'email', 'phone', 'image']
-#         extra_kwargs = {
-#             'password': {'write_only': True},
-#             'image': {'required': False}
-#         }
-
-#     def validate(self, data):
-#         if data['password1'] != data['password2']:
-#             raise serializers.ValidationError({"password": "비밀번호가 일치하지 않습니다."})
-        
-#         image = data.get('image')
-#         if image and image.size > 5 * 1024 * 1024: 
-#             raise serializers.ValidationError({
-#                 "image": "이미지 파일은 5MB 이하로 업로드 가능합니다."
-#             })
-        
-#         return data
-
-#     def create(self, validated_data):
-#         password = validated_data.pop('password1')
-#         validated_data.pop('password2')
-
-#         # django의 create_user() 메서드를 통해 비밀번호 자동 해싱
-#         user = User.objects.create_user(
-#             username = validated_data['username'],
-#             password = password,   # 이 필드를 create_user에서 해싱함
-#             first_name = validated_data.get('first_name', ''),
-#             last_name = validated_data.get('last_name', ''),
-#             email = validated_data.get('email'),
-#             phone = validated_data.get('phone', ''),
-#             # 이미지 필드는 없는 경우, 기본값 None 설정
-#             image = validated_data.get('image', None)
-#         )
-#         return user
-
-
 class UserRegisterSerializer(RegisterSerializer):
     # 추가 필드
     """
@@ -126,52 +84,19 @@ class UserLoginSerializer(serializers.Serializer):
         data['user'] = user
         return data
     
-# class CustomUserDetailSerializer(UserDetailsSerializer):
-#     phone = serializers.CharField(required=False, allow_blank=True)
-#     profile_image = serializers.ImageField(required=False, allow_null=True)
-
-#     class Meta(UserDetailsSerializer.Meta):
-#         fields = ['username', 'email', 'phone', 'first_name', 'last_name', 'profile_image']
-#         read_only_fields = ('username',)
-
-#     # 오버라이딩(?)
-#     def update(self, instance, validated_data):
-#         # profile_image가 포함된 경우에만 업데이트
-#         profile_image = validated_data.pop('profile_image', None)
-#         if profile_image is not None:       # 파일이 없는 경우에도 포함됨
-#             instance.profile_image = profile_image
-
-#         # # 나머지 필드 업데이트
-#         # return super().update(instance, validated_data)
-
-#         # 나머지 필드 업데이트
-#         for attr, value in validated_data.items():
-#             if attr != 'profile_image':  # profile_image는 이미 처리했으므로 제외
-#                 setattr(instance, attr, value)
-
-#         instance.save()  # 저장
-#         return instance
-    
-#     def to_representation(self, instance):
-#         """인스턴스를 JSON으로 변환할 때 profile_image의 전체 URL을 반환"""
-#         ret = super().to_representation(instance)
-#         if instance.profile_image:
-#             ret['profile_image'] = self.context['request'].build_absolute_uri(instance.profile_image.url)
-#         return ret
-
 
 logger = logging.getLogger(__name__)
 
-class CustomUserDetailSerializer(UserDetailsSerializer):
+class CustomUserUpdateSerializer(UserDetailsSerializer):
+    email = serializers.EmailField(required=False)
     phone = serializers.CharField(required=False, allow_blank=True)
     profile_image = serializers.ImageField(required=False, allow_null=True)
-    email = serializers.EmailField(required=False)
 
     class Meta:
         from .models import CustomUser
         model = CustomUser
         fields = ['username', 'email', 'phone', 'first_name', 'last_name', 'profile_image']
-        read_only_fields = ('email',)
+        read_only_fields = ('username',)
 
     def update(self, instance, validated_data):
         logger.info(f"Updating user with data: {validated_data}")
@@ -195,7 +120,7 @@ class CustomUserDetailSerializer(UserDetailsSerializer):
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
             
-        instance.save()
+        instance.save()                 # DB update 실행
         logger.info(f"Updated user instance: {instance.__dict__}")
         return instance
         
