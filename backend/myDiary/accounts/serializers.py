@@ -6,6 +6,7 @@ from dj_rest_auth.serializers import UserDetailsSerializer
 from dj_rest_auth.registration.serializers import RegisterSerializer
 import logging
 from django.core.files.storage import default_storage
+from django.contrib.auth.password_validation import validate_password
 
 # 순환 참조를 막기 위해 사용함 (완전히 이해는 안됨)
 # AUTH_USER_MODEL에 설정된 CustomUser 가져옴
@@ -92,40 +93,55 @@ class CustomUserUpdateSerializer(UserDetailsSerializer):
     phone = serializers.CharField(required=False, allow_blank=True)
     profile_image = serializers.ImageField(required=False, allow_null=True)
 
+    # 비밀번호 변경 필드
+    current_password = serializers.CharField(write_only=True, required=False)
+    new_password1 = serializers.CharField(write_only=True, required=False)
+    new_password2 = serializers.CharField(write_only=True, required=False)
+
+    def validate(self, data):
+        new_password1 = data.get('new_password1')
+        new_password2 = data.get('new_password2')
+        current_password = data.get('current_password')
+
+        if new_password1 or new_password2:
+            if not current_password:
+                raise serializers.ValidationError({"current_password": "Current password is required to change the password."})
+            if not self.context['request'].user.check_password(current_password):
+                raise serializers.ValidationError({"current_password": "Current password is incorrect."})
+            if new_password1 != new_password2:
+                raise serializers.ValidationError({"new_password": "New passwords do not match."})
+            validate_password(new_password1, self.context['request'].user)
+
+        return data
+
     class Meta:
         from .models import CustomUser
         model = CustomUser
-        fields = ['username', 'email', 'phone', 'first_name', 'last_name', 'profile_image']
+        fields = ['username', 'email', 'phone', 'first_name', 'last_name', 'profile_image', 'new_password1', 'new_password2', 'current_password']
         read_only_fields = ('username',)
 
     def update(self, instance, validated_data):
-        logger.info(f"Updating user with data: {validated_data}")
-        
-        # profile_image 처리
+        # Profile image 처리
         if 'profile_image' in validated_data:
-            # 기존 이미지가 있다면 삭제
             if instance.profile_image:
                 default_storage.delete(instance.profile_image.path)
             instance.profile_image = validated_data.pop('profile_image')
-            
-        # email 처리
-        if 'email' in validated_data:
-            instance.email = validated_data.pop('email')
-            
-        # phone 처리
-        if 'phone' in validated_data:
-            instance.phone = validated_data.pop('phone')
-            
-        # 나머지 필드들 처리
+        # Email, phone 및 기타 필드 처리
+        instance.email = validated_data.get('email', instance.email)
+        instance.phone = validated_data.get('phone', instance.phone)
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
-            
-        instance.save()                 # DB update 실행
-        logger.info(f"Updated user instance: {instance.__dict__}")
+        instance.save()
+
+        # 비밀번호 변경
+        new_password = validated_data.get('new_password1')
+        if new_password:
+            instance.set_password(new_password)
+            instance.save()
+
         return instance
-        
+
     def to_representation(self, instance):
-        """사용자 정보를 응답할 때 이미지 URL 처리"""
         ret = super().to_representation(instance)
         if instance.profile_image:
             ret['profile_image'] = self.context['request'].build_absolute_uri(instance.profile_image.url)

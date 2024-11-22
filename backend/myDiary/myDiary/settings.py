@@ -52,7 +52,7 @@ REST_AUTH = {
     'USE_JWT': True,
     'JWT_AUTH_COOKIE': 'my-app-auth',
     'JWT_AUTH_REFRESH_COOKIE': 'my-refresh-token',
-    'USER_DETAILS_SERIALIZER': 'accounts.serializers.CustomUserDetailSerializer',
+    'USER_DETAILS_SERIALIZER': 'accounts.serializers.CustomUserUpdateSerializer',
     'REGISTER_SERIALIZER': 'accounts.serializers.UserRegisterSerializer',
     'ALLOW_EMPTY_EMAIL': True,
 }
