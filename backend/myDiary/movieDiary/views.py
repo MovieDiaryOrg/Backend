@@ -3,9 +3,11 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
 from rest_framework import status
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
 from .serializers import MovieJournalSerializer, TestSerializer
 from rest_framework.permissions import IsAuthenticated
-from .models import MovieJournal, MovieEvaluation, Recommended
+from .models import MovieJournal, MovieEvaluation, Recommended, LikedJournal
 from movies.models import Movie, Genre, MovieGenre
 from django.conf import settings
 from openai import OpenAI
@@ -28,6 +30,16 @@ class MovieJournalViewSet(ModelViewSet):
         self.movie_journal = None
         self.movie_evaluation = None
         self.OPENAI_API_KEY = settings.OPENAI_API_KEY
+    
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+
+        data = serializer.data
+        data['likes'] = len(instance.likes.all())
+        data['comments'] = instance.comments.all()
+
+        return Response(data)
 
     # ModelViewSet 클래스가 상속받는 mixins.CreateModelMixin 클래스의 create() 오버라이딩
     def create(self, request, *args, **kwargs):
@@ -190,11 +202,21 @@ class MovieJournalViewSet(ModelViewSet):
             journals = self.queryset.filter(user=request.user)
         serializer = self.get_serializer(journals, many=True)
         return Response(serializer.data)
+    
 
-    # ModelViewSet에서 destroy(delete) 메서드가 기본 제공되므로 오버라이드할 필요 없음
-    # 특정 다이어리(journal)를 삭제함
-    # @action(detail=True, method=['DELETE'], url_path='delete')
-    # def delete_journal(self, request, pk=None):
-    #     journal = self.get_object()
-    #     journal.delete()
-    #     return Response({'message': 'Journal deleted'}, status=status.HTTP_204_NO_CONTENT)
+@login_required
+@api_view(['POST'])
+def createLike(request, journal_pk):
+    movie_journal = MovieJournal.objects.get(pk=journal_pk)
+
+    # 중복 체크 및 LikedJournal 생성
+    like, created = LikedJournal.objects.get_or_create(movie_journal = movie_journal, user=request.user)
+
+    if created:
+        message = "Like created successfully!"
+    else:
+        # 기존 LikedJournal 객체 삭제
+        like.delete()
+        message = "Like removed successfully."
+
+    return JsonResponse({"message": message})

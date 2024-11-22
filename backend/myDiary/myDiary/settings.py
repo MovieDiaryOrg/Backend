@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'django_seed',
+    'django_filters',
 ]
 
 # Django sites 프레임워크 관련 설정
