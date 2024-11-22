@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from .serializers import UserRegisterSerializer, UserLoginSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from dj_rest_auth.views import UserDetailsView
-from .serializers import CustomUserDetailSerializer
+from .serializers import CustomUserUpdateSerializer
 from django.contrib.auth import logout
 from rest_framework_simplejwt.tokens import RefreshToken
 import logging
@@ -64,45 +64,51 @@ class UserLoginAPIView(APIView):
 logger = logging.getLogger(__name__)
 
 class CustomUserUpdateView(UserDetailsView):
-    serializer_class = CustomUserDetailSerializer
+    serializer_class = CustomUserUpdateSerializer
     parser_classes = (MultiPartParser, FormParser, JSONParser)
 
     def get_object(self):
         return self.request.user
 
-    # PATCH 요청: 회원 정보 수정 
     def patch(self, request, *args, **kwargs):
+        user = self.get_object()
+        
         # 요청 데이터 로깅
         logger.info(f"Request Data: {request.data}")
         logger.info(f"Request Files: {request.FILES}")
 
-        self.object = self.get_object()
-        serializer = self.get_serializer(self.object, data=request.data, partial=True)
+        # Serializer 초기화 (partial=True로 부분 수정 허용)
+        serializer = self.get_serializer(user, data=request.data, partial=True)
         
-        # 유효성 검사 결과 로깅
+        # 데이터 유효성 검사
         if not serializer.is_valid():
             logger.error(f"Serializer Errors: {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-        # 저장 전 데이터 로깅
+        # 유효성 통과 후 validated_data 확인
         logger.info(f"Validated Data: {serializer.validated_data}")
-        
+
+        # 비밀번호 변경 여부 확인
+        new_password = serializer.validated_data.get('new_password1')
         try:
-            # 저장 시도 (CustomUserDetailSerializer의 update() 메서드 실행)
+            # Serializer의 update() 메서드에서 비밀번호 변경 및 회원 정보 수정 처리
             serializer.save()
-            
-            # 저장 후 객체 상태 로깅
-            logger.info(f"Updated User Data: {self.object.__dict__}")
-            
-            return Response({
+
+            # 저장 후 상태 로깅
+            logger.info(f"Updated User Data: {user.__dict__}")
+
+            # 성공 응답 반환
+            response_data = {
                 'user': serializer.data,
-                'message': '회원 정보 수정에 성공했습니다.',
-            }, status=status.HTTP_200_OK)
-            
+                'message': '회원 정보 및 비밀번호 변경에 성공했습니다.' if new_password else '회원 정보 수정에 성공했습니다.'
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+
         except Exception as e:
             logger.error(f"Save Error: {str(e)}")
             return Response({
-                'error': str(e)
+                'error': str(e),
+                'message': '회원 정보 수정 중 오류가 발생했습니다.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         
