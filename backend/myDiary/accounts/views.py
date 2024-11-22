@@ -61,59 +61,16 @@ class UserLoginAPIView(APIView):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-# class CustomUserDetailsView(UserDetailsView):
-#     serializer_class = CustomUserDetailSerializer
-#     parser_classes = (MultiPartParser, FormParser, JSONParser)
-
-#     def get_object(self):
-#         return self.request.user
-
-#     def patch(self, request, *args, **kwargs):
-#         self.object = self.get_object()
-#         serializer = self.get_serializer(self.object, data=request.data, partial=True)
-
-#         if serializer.is_valid():
-#             serializer.save()
-#             # validated_data = serializer.validated_data
-#             # user = validated_data.get('user')
-#             # tokens = validated_data.get('tokens')
-
-#             return Response({
-#                 'user': {
-#                     'pk': self.object.pk,
-#                     'username': self.object.username,
-#                     'email': self.object.email,
-#                     'phone': self.object.phone,
-#                     'first_name': self.object.first_name,
-#                     'last_name': self.object.last_name,
-#                     'profile_image': request.build_absolute_uri(self.object.profile_image.url) if self.object.profile_image else None,
-#                 },
-#                 'message': '회원 정보 수정에 성공했습니다.',
-#             }, status=status.HTTP_200_OK)
-            
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-#     # GET 메서드 - 현재 사용자 정보 조회
-#     def get(self, request, *args, **kwargs):
-#         instance = self.get_object()
-#         serializer = self.get_serializer(instance)
-        
-#         return Response({
-#             'user': serializer.data,
-#             'message': '회원 정보를 성공적으로 조회했습니다.',
-#         })
-
-
 logger = logging.getLogger(__name__)
 
-class CustomUserDetailsView(UserDetailsView):
+class CustomUserUpdateView(UserDetailsView):
     serializer_class = CustomUserDetailSerializer
     parser_classes = (MultiPartParser, FormParser, JSONParser)
 
     def get_object(self):
         return self.request.user
 
+    # PATCH 요청: 회원 정보 수정 
     def patch(self, request, *args, **kwargs):
         # 요청 데이터 로깅
         logger.info(f"Request Data: {request.data}")
@@ -131,7 +88,7 @@ class CustomUserDetailsView(UserDetailsView):
         logger.info(f"Validated Data: {serializer.validated_data}")
         
         try:
-            # 저장 시도
+            # 저장 시도 (CustomUserDetailSerializer의 update() 메서드 실행)
             serializer.save()
             
             # 저장 후 객체 상태 로깅
@@ -147,6 +104,7 @@ class CustomUserDetailsView(UserDetailsView):
             return Response({
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
         
 
 class UserDeleteView(APIView):

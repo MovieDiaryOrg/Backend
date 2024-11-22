@@ -23,6 +23,3 @@ custom_urlpatterns = [
 ]
 
 urlpatterns = router.urls + custom_urlpatterns
-
-
-
