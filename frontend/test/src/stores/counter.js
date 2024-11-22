@@ -123,6 +123,8 @@ export const useCounterStore = defineStore('counter', () => {
       isLoading.value = false
     }
   }
+  
+
 
   return {  
     signUp,

@@ -20,7 +20,11 @@ const router = createRouter({
       path: '/logout',
       name: 'logout',
       component: LogoutView
-    }
+    },
+    {
+      path: "/",
+      redirect: "/login", // 기본 경로를 로그인 페이지로 리디렉션
+    },
   ]
 })
 
