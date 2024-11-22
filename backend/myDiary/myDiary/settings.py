@@ -52,8 +52,9 @@ REST_AUTH = {
     'USE_JWT': True,
     'JWT_AUTH_COOKIE': 'my-app-auth',
     'JWT_AUTH_REFRESH_COOKIE': 'my-refresh-token',
-    'USER_DETAILS_SERIALIZERS': 'accounts.serializers.CustomUserDetailSerializers',
+    'USER_DETAILS_SERIALIZER': 'accounts.serializers.CustomUserDetailSerializer',
     'REGISTER_SERIALIZER': 'accounts.serializers.UserRegisterSerializer',
+    'ALLOW_EMPTY_EMAIL': True,
 }
 
 REST_AUTH_VIEWS = {
@@ -167,7 +168,12 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         # 'rest_framework.authentication.TokenAuthentication'
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.MultiPartParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.JSONParser',
+    ],
 }
 
 # JWT 설정
@@ -185,3 +191,20 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 load_dotenv()       # .env 파일 로드
 TMDB_API_KEY = os.getenv('TMDB_API_KEY')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+
+# Logging 관련
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        '': {  # 루트 로거
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+    },
+}

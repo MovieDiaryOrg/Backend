@@ -78,11 +78,24 @@ export const useCounterStore = defineStore('counter', () => {
       isLoading.value = true
       error.value = null
       
-      const response = await axios.post('http://localhost:8000/accounts/dj-rest-auth/registration/', {
-        username: signUpData.username,
-        password1: signUpData.password1,  // password1을 사용
-        password2: signUpData.password2,  // password2을 사용 -> dj_rest_auth는 password confirmation을 요구하므로
-      })
+      const formData = new FormData();
+      formData.append('username', signUpData.username);
+      formData.append('password1', signUpData.password1);
+      formData.append('password2', signUpData.password2);   //  dj_rest_auth는 password confirmation을 요구하므로
+      formData.append('first_name', signUpData.first_name);
+      formData.append('last_name', signUpData.last_name);
+      formData.append('phone', signUpData.phone);
+      formData.append('email', signUpData.email );
+      if (signUpData.profile_image) {
+        formData.append('profile_image', signUpData.profile_image); // 파일 추가
+      }
+
+      const response = await axios.post('http://localhost:8000/accounts/dj-rest-auth/registration/', 
+        formData,
+        {
+          headers: {'Content-Type': 'multipart/form-data'}
+        }
+      );
 
       if (response.status === 201 || response.status === 200) {
         // 회원가입 후 자동으로 받은 토큰이 있다면 저장
@@ -101,11 +114,7 @@ export const useCounterStore = defineStore('counter', () => {
       }
     } catch (err) {
       console.log('Error response:', err.response)    // 에러 확인용 출력
-      if (err.message === '비밀번호가 일치하지 않습니다.') {
-        error.value = err.message
-      } else {
-        error.value = err.response?.data?.message || '회원가입 중 오류가 발생했습니다.'
-      }
+      error.value = err.response?.data?.message || '회원가입 중 오류가 발생했습니다.';
       return {
         success: false,
         message: error.value
