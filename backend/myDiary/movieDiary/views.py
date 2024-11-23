@@ -7,7 +7,7 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from .serializers import MovieJournalSerializer, TestSerializer
 from rest_framework.permissions import IsAuthenticated
-from .models import MovieJournal, MovieEvaluation, Recommended, LikedJournal
+from .models import MovieJournal, Recommended, LikedJournal
 from movies.models import Movie, Genre, MovieGenre
 from django.conf import settings
 from openai import OpenAI
@@ -31,11 +31,15 @@ class MovieJournalViewSet(ModelViewSet):
         self.movie_evaluation = None
         self.OPENAI_API_KEY = settings.OPENAI_API_KEY
     
+    # 상세조회
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
 
         data = serializer.data
+        movie_title = self.get_movie_id(data)
+        
+        data['movie'] = movie_title
         data['likes'] = len(instance.likes.all())
         data['comments'] = instance.comments.all()
 
@@ -57,7 +61,6 @@ class MovieJournalViewSet(ModelViewSet):
             if not rslt.get("movieJournal"):
                 raise ValueError("MovieJournal 객체 생성에 실패했습니다.")
             self.movie_journal = rslt['movieJournal']
-            self.movie_evaluation = rslt['movieEvaluation']
         else:
             self.movie_journal = rslt
         print(f'MovieJournal 객체가 생성되었습니다: {self.movie_journal}')
@@ -69,17 +72,61 @@ class MovieJournalViewSet(ModelViewSet):
         self.create_ai_img()
     
         response_data = {
-            'url': ''                   # 클라이언트가 상세페이지를 조회하기 위해 사용할 url만 반환함
+            'url': f'http://localhost:8000/movieDiary/{self.movie_journal.id}/'                   # 클라이언트가 상세페이지를 조회하기 위해 사용할 url만 반환함
         }
 
         headers = self.get_success_headers(response_data)
         return Response(response_data, status=status.HTTP_201_CREATED, headers=headers)
     
     
+    # 수정 요청 처리 (PATCH)
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)  # partial 여부 결정
+        instance = self.get_object()  # 기존 인스턴스 가져오기
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+
+        if not serializer.is_valid(raise_exception=True):
+            print(serializer.errors)
+            raise ValidationError(serializer.errors)
+
+        # MovieJournal 객체 업데이트
+        self.movie_journal = serializer.save()
+        print(f"MovieJournal 객체가 수정되었습니다: {self.movie_journal}")
+
+        # OpenAI API를 이용해 감상문 분석
+        self.create_ai_analystic(self.movie_journal.content)
+
+        # OpenAI API를 이용해 그림 생성
+        self.create_ai_img()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def list(self, request, *args, **kwargs):
+        print(f'list_request = {request.data}')
+        # queryset = self.filter_queryset(self.get_queryset())
+
+        # page = self.paginate_queryset(queryset)
+        # if page is not None:
+        #     serializer = self.get_serializer(page, many=True)
+        #     return self.get_paginated_response(serializer.data)
+
+        # serializer = self.get_serializer(queryset, many=True)
+        # return Response(serializer.data)
+    
+    
     # mixin.CreateModelMixin 클래스 내부 메소드 오버라이딩
     def perform_create(self, serializer):
         return serializer.save()
 
+    def get_movie_id(self, data):
+        to_slice = data['movie']
+        position = to_slice.find('(')
+        movie_id = int(to_slice[position+1:-1])
+        
+        title = Movie.objects.get(tmdb_id=movie_id).title
+        
+        return title
+        
     def create_ai_analystic(self, content):
         """
         OpenAI API를 이용해 추천 영화 및 그림 생성 프롬프트 생성
@@ -173,7 +220,6 @@ class MovieJournalViewSet(ModelViewSet):
             recommended = Recommended(movie=movie[0], movie_journal=self.movie_journal, reason=reason)
             recommended.save()
 
-
     def create_ai_img(self):
         """
         DALL.E3를 이용해 그림 생성
@@ -190,7 +236,6 @@ class MovieJournalViewSet(ModelViewSet):
         ai_image_url = response.data[0].url
         self.movie_journal.ai_img = ai_image_url
         self.movie_journal.save()               # 수정사항 저장
-
 
     # 로그인한 사용자의 다이어리 목록 반환
     @action(detail=False, methods=["GET"], url_path='(?P<user_pk>[^/.]+)/list')
@@ -220,3 +265,6 @@ def createLike(request, journal_pk):
         message = "Like removed successfully."
 
     return JsonResponse({"message": message})
+
+
+
