@@ -1,8 +1,7 @@
-from rest_framework.serializers import DecimalField
 from rest_framework import serializers
-from .models import MovieJournal, JournalComment, LikedJournal
+from .models import MovieJournal, JournalComment, Recommended
 from movies.models import Movie
-from accounts.models import CustomUser
+from movies.serializers import MovieSerializer
 
 class MovieJournalSerializer(serializers.ModelSerializer):
     class Meta:
@@ -22,8 +21,8 @@ class TestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MovieJournal  # 어떤 모델을 기반으로 하는지 지정 -> 왜 꼭 해야하지?
-        fields = ['content', 'watched_date', 'created_at', 'modified_at', 'movie', 'ai_img', 'evaluation']  # 포함할 필드 명시
-        read_only_fields = ['created_at', 'modified_at', 'ai_img']
+        fields = ['id', 'content', 'watched_date', 'created_at', 'modified_at', 'movie', 'ai_img', 'evaluation']  # 포함할 필드 명시
+        read_only_fields = ['id', 'created_at', 'modified_at', 'ai_img']
 
     # save() 메서드 실행 시 자동으로 호출됨
     def create(self, validated_data):
@@ -63,4 +62,18 @@ class TestSerializer(serializers.ModelSerializer):
         
         instance.save()
         return instance
+    
 
+class JournalCommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JournalComment
+        fields = ['id', 'content', 'user', 'created_at']  # 필요한 필드만 포함
+        
+
+class RecommendedMovieSerializer(serializers.ModelSerializer):
+    # Movie 데이터를 직렬화함
+    movie = MovieSerializer() 
+
+    class Meta:
+        model = Recommended
+        fields = ['movie', 'reason']  # 필요한 필드만 직렬화

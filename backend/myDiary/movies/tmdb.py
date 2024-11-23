@@ -81,7 +81,7 @@ def pull_kr_movies(pg_num):
                     "release_date": item['release_date'],
                     "description": item['overview'],
                     "original_language": item['original_language'],
-                    "poster_path": item['poster_path'],
+                    "poster_path": 'https://image.tmdb.org/t/p/w600_and_h900_bestv2' + item['poster_path'],
                     "vote_average": item['vote_average'],
                     "adult": item['adult']
                 }
@@ -102,7 +102,7 @@ def pull_kr_movies(pg_num):
 
 
 # 외국 영화 데이터 받아오는 함수
-def pull_eng_movies():
+def pull_eng_movies(pg_num):
     url = "https://api.themoviedb.org/3/movie/top_rated"
 
     headers = {
@@ -112,7 +112,7 @@ def pull_eng_movies():
 
     params = {
         "language": "en-US",
-        "page": 3
+        "page": str(pg_num)
     }
 
     response = requests.get(url, headers=headers, params=params)
@@ -128,7 +128,7 @@ def pull_eng_movies():
                     "release_date": item['release_date'],
                     "description": item['overview'],
                     "original_language": item['original_language'],
-                    "poster_path": item['poster_path'],
+                    "poster_path": 'https://image.tmdb.org/t/p/w600_and_h900_bestv2' + item['poster_path'],
                     "vote_average": item['vote_average'],
                     "adult": item['adult']
                 }
@@ -154,11 +154,13 @@ if __name__ == '__main__':
     # 1. 장르 데이터 받아옴 (장르 더미 데이터 생성)
     pull_genres()
     # 2. 한국 영화 데이터 받아옴 (더미 데이터 생성)
-    while cnt < 7:
+    while cnt < 20:
         pull_kr_movies(cnt)
         cnt += 1
     # 2-2. 외국 영화 데이터 받아옴 (더미 데이터 생성)
-    # pull_eng_movies()
+    while cnt < 20:
+        pull_eng_movies(cnt)
+        cnt += 1
 
     with open('./fixtures/movies.json', 'w', encoding='utf-8') as f:
         # json.dump: Python 객체를 JSON 형식으로 변환하여 파일에 저장하는 함수
