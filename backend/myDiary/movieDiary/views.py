@@ -5,14 +5,15 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
-from .serializers import MovieJournalSerializer, TestSerializer
+from .serializers import TestSerializer, JournalCommentSerializer, RecommendedMovieSerializer
 from rest_framework.permissions import IsAuthenticated
-from .models import MovieJournal, Recommended, LikedJournal
-from movies.models import Movie, Genre, MovieGenre
+from .models import MovieJournal, Recommended, LikedJournal, JournalComment
+from movies.models import Movie
 from django.conf import settings
 from openai import OpenAI
 import json
 from django.core.exceptions import ValidationError
+from movies.serializers import MovieSerializer
 
 """
 ModelViewSet은 기본적인 CRUD 작업을 제공하며, 
@@ -37,12 +38,21 @@ class MovieJournalViewSet(ModelViewSet):
         serializer = self.get_serializer(instance)
 
         data = serializer.data
-        movie_title = self.get_movie_id(data)
+        movie_title = self.get_movie_title(data)
+        
+        # 댓글 직렬화
+        comments = instance.comments.all()  # 댓글 QuerySet 가져오기
+        comment_serializer = JournalCommentSerializer(comments, many=True)  # 다수의 객체 직렬화
+        
+        # 추천 영화 직렬화 (Recommended 모델 사용)
+        recommended_movies = instance.recommends.all()  # MovieJournal과 연결된 Recommended QuerySet
+        recommended_serializer = RecommendedMovieSerializer(recommended_movies, many=True)
         
         data['movie'] = movie_title
-        data['likes'] = len(instance.likes.all())
-        data['comments'] = instance.comments.all()
-
+        data['likes'] = instance.likes.count()
+        data['comments'] = comment_serializer.data  # 댓글 데이터를 JSON으로 추가
+        data['recommended'] = recommended_serializer.data
+        
         return Response(data)
 
     # ModelViewSet 클래스가 상속받는 mixins.CreateModelMixin 클래스의 create() 오버라이딩
@@ -101,24 +111,14 @@ class MovieJournalViewSet(ModelViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
     
-    def list(self, request, *args, **kwargs):
-        print(f'list_request = {request.data}')
-        # queryset = self.filter_queryset(self.get_queryset())
-
-        # page = self.paginate_queryset(queryset)
-        # if page is not None:
-        #     serializer = self.get_serializer(page, many=True)
-        #     return self.get_paginated_response(serializer.data)
-
-        # serializer = self.get_serializer(queryset, many=True)
-        # return Response(serializer.data)
-    
+    # def list(self, request, *args, **kwargs):
+    #     print(f'list_request = {request.data}')
     
     # mixin.CreateModelMixin 클래스 내부 메소드 오버라이딩
     def perform_create(self, serializer):
         return serializer.save()
 
-    def get_movie_id(self, data):
+    def get_movie_title(self, data):
         to_slice = data['movie']
         position = to_slice.find('(')
         movie_id = int(to_slice[position+1:-1])
@@ -268,3 +268,28 @@ def createLike(request, journal_pk):
 
 
 
+@login_required
+@api_view(['POST', 'PATCH'])
+def createJournalComment(request, journal_pk):
+    movie_journal = MovieJournal.objects.get(pk=journal_pk)
+    if request.method == 'POST':
+        JournalComment.objects.create(
+            content = request.data['content'],
+            user = request.user,
+            movie_journal = movie_journal
+        )
+        message = "Create comment successfully!"
+    elif request.method == 'PATCH':
+        journalComment = JournalComment.objects.get(user=request.user, movie_journal=movie_journal)
+        journalComment.content = request.data['content']
+        journalComment.save()
+        message = "Modify comment successfully."
+    return JsonResponse({"message": message})
+
+@login_required
+@api_view(['DELETE'])
+def deleteJournalComment(request, comment_pk):
+    journalComment = JournalComment.objects.get(pk=comment_pk)
+    journalComment.delete()
+    return JsonResponse({"message": "Delete comment successfully."})
+    
