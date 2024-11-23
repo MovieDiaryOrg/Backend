@@ -26,19 +26,18 @@ class EvaluationSerializer(serializers.ModelSerializer):
 
 class TestSerializer(serializers.ModelSerializer):
     # MovieJournal 관련 필드
+    # 여기에 포함된 필드들은 무조건 입력받도록 요청하게 되므로, 
+    # 필드는 존재하나 값을 입력받지 않도록 하고 싶으면 ModelSerializer의 필드에만 포함시키면 됨
     title = serializers.CharField(max_length=100)
     content = serializers.CharField()
     watched_date = serializers.DateField()
-    created_at = serializers.DateTimeField()
-    modified_at = serializers.DateTimeField()
     movie = serializers.PrimaryKeyRelatedField(queryset=Movie.objects.all())
-    ai_img = serializers.CharField()
-    evaluation = serializers.SerializerMethodField()
+    evaluation = serializers.DecimalField(max_digits=3, decimal_places=2)
 
     class Meta:
         model = MovieJournal  # 어떤 모델을 기반으로 하는지 지정 -> 왜 꼭 해야하지?
         fields = ['title', 'content', 'watched_date', 'created_at', 'modified_at', 'movie', 'ai_img', 'evaluation']  # 포함할 필드 명시
-        read_only_fields = ['created_at', 'modified_at', 'ai_img', 'evaluation'] 
+        read_only_fields = ['created_at', 'modified_at', 'ai_img']
 
     def get_evaluation(self, obj):
         # MovieEvaluation에서 해당 MovieJournal과 관련된 평가를 가져옴
