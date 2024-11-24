@@ -14,18 +14,3 @@ class MovieViewSet(viewsets.ModelViewSet):
     pagination_class = MoviePagination
     filter_backends = [filters.SearchFilter]    # filters에 SearchFilter 지정
     search_fields = ['^title']                   # search가 적용될 fields 지정
-
-
-
-# Create your views here.
-def movieList(request):
-    pass
-
-def createMovie(request):
-    pass
-
-def movieDetail(request):
-    pass
-
-def deleteMovie(request):
-    pass
