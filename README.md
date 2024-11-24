@@ -100,6 +100,9 @@ directory
 │     ├─ README.md
 │     ├─ requirements.txt
 │     ├─ static
+│     ├─ media
+│     │  └─ profile_images
+│     ├─ .env
 │     └─ test_gpt.py
 ├─ frontend
 │  └─ test
