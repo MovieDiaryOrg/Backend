@@ -2,7 +2,6 @@ from movieDiary.serializers import TestSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from movies.models import Movie
-from movieDiary.serializers import MovieJournalSerializer
 from movieDiary.models import LikedJournal, MovieJournal
 from django.db.models import Count
 
@@ -30,7 +29,14 @@ def mainPage(request):
     
     # 기록 목록 제공
     movie_journals = MovieJournal.objects.all()
-    movie_journal_serializer = MovieJournalSerializer(movie_journals, many=True)
+    movie_journal_serializer = TestSerializer(movie_journals, many=True)
+    
+    # 직렬화된 데이터를 가져온 뒤 각 감상문별 좋아요 수 추가
+    movie_journal_data = movie_journal_serializer.data
+    for journal in movie_journal_data:
+        journal_id = journal['id']
+        likes_count = LikedJournal.objects.filter(movie_journal_id=journal_id).count()  # 좋아요 수 계산
+        journal['likes_count'] = likes_count  # 좋아요 수 추가
     
     return Response({
         "popular_movie":{
@@ -42,7 +48,5 @@ def mainPage(request):
             "vote_average": movie.vote_average,
             "liked_count": most_liked['count']    
         },
-        "movie_journals": movie_journal_serializer.data
+        "movie_journals": movie_journal_data
     })
-    
-    
