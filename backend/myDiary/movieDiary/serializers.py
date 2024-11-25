@@ -26,6 +26,7 @@ class TestSerializer(serializers.ModelSerializer):
 
     # save() 메서드 실행 시 자동으로 호출됨
     def create(self, validated_data):
+        print(f"validated_data = {validated_data['movie']}")
         selected_movie = self.get_movie(validated_data['movie'])
         
         # MovieJournal 생성
