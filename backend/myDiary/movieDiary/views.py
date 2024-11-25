@@ -81,6 +81,10 @@ class MovieJournalViewSet(ModelViewSet):
         return Response(response_data, status=status.HTTP_201_CREATED, headers=headers)
     
     
+    # mixin.CreateModelMixin 클래스 내부 메소드 오버라이딩
+    def perform_create(self, serializer):
+        return serializer.save()
+    
     # 수정 요청 처리 (PATCH)
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)  # partial 여부 결정
@@ -147,13 +151,48 @@ class MovieJournalViewSet(ModelViewSet):
         data['comments'] = comment_serializer.data  # 댓글 데이터를 JSON으로 추가
         data['recommended'] = recommended_serializer.data
         
-        return Response(data)
+        return Response(data)  
     
-    # mixin.CreateModelMixin 클래스 내부 메소드 오버라이딩
-    def perform_create(self, serializer):
-        return serializer.save()
+    @action(detail=False, methods=['get'], url_path='list')
+    def journalList(self, request, *args, **kwargs):
+        print('list 호출됨')
+        # queryset 가져오기
+        queryset = self.filter_queryset(
+            self.get_queryset()
+            .select_related('movie')  # movie 관련 데이터 미리 로드
+            .prefetch_related('likes', 'comments')  # 좋아요와 댓글 데이터 미리 로드
+        )
 
+        # 페이지네이션 처리
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            response_data = [
+                {
+                    'data': serializer.data[i],
+                    'title': journal.movie.title,
+                    'likes': journal.likes.count(),
+                    'comments': journal.comments.count(),
+                }
+                for i, journal in enumerate(page)
+            ]
+            return self.get_paginated_response(response_data)
 
+        # 페이지네이션이 없을 경우
+        serializer = self.get_serializer(queryset, many=True)
+        response_data = [
+            {
+                'data': serializer.data[i],
+                'title': journal.movie.title,
+                'likes': journal.likes.count(),
+                'comments': journal.comments.count(),
+            }
+            for i, journal in enumerate(queryset)
+        ]
+        
+        return Response(response_data)
+    
+    
     def get_movie_title(self, data):
         to_slice = data['movie']
         position = to_slice.find('(')
@@ -295,19 +334,7 @@ class MovieJournalViewSet(ModelViewSet):
         except requests.RequestException as e:
             print(f"이미지 다운로드 중 오류 발생: {e}")
             
-
-    # 로그인한 사용자의 다이어리 목록 반환
-    @action(detail=False, methods=["GET"], url_path='list')
-    # detail=False는 단일 객체가 아닌, 목록 조회용 메서드임을 나타냄
-    def user_journals(self, request):
-        user = request.user
-        queryset = self.queryset.filter(user=user)
-        
-        serializer = self.get_serializer(queryset, many = True)
-        return Response(serializer.data)
-    
-    
-
+            
 @login_required
 @api_view(['POST'])
 def createLike(request, journal_pk):
