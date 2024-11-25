@@ -15,6 +15,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 import logging
 from .models import CustomUser
 from rest_framework.decorators import api_view
+from movieDiary.serializers import JournalCommentSerializer
 
 
 # CBV(Class-Based View, 클래스 기반 뷰)
@@ -160,6 +161,78 @@ class UserDeleteView(APIView):
                 'message': '회원 탈퇴 처리 중 오류가 발생했습니다.',
                 'detail': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            
+class UserDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, *args, **kwargs):
+        response_data = self.detail()
+        return Response(response_data)
+    
+    def detail(self):
+        user = self.request.user
+    
+        # 좋아요한 감상문 리스트
+        liked_journals = user.likes.all()
+        response_like = [
+            {
+                'id': like.id,
+                'title': like.movie_journal.movie.title,
+                'image': like.movie_journal.ai_img.url if like.movie_journal.ai_img else None,
+                'writer': like.movie_journal.user.username,
+                'evaluation': like.movie_journal.evaluation,
+                'like_count': like.movie_journal.likes.count()
+            }
+            for like in liked_journals]
+        
+        # 작성한 댓글 리스트
+        write_comments = [
+            {
+                'id': comment.id,
+                'content': comment.content,
+                'created_at': comment.created_at,
+                'movie_journal': comment.movie_journal.id,
+                'movie_title': comment.movie_journal.movie.title
+            }
+            for comment in user.comments.select_related('movie_journal__movie').all()
+            # selected_related: JOIN 쿼리 사용 -> N + 1 문제 방지
+        ]
+        
+        followers = user.followers.all()
+        followings = user.followings.all()
+        
+        # 팔로워/팔로잉 데이터 직렬화
+        followers_data = [{"id": follower.id, 
+                           "username": follower.username,
+                           "email": follower.email,
+                           "profile_image": follower.profile_image.url if follower.profile_image else None
+                           } 
+                          for follower in followers]
+        
+        followings_data = [{"id": following.id, 
+                            "username": following.username,
+                            "email": following.email,
+                            "profile_image": following.profile_image.url if following.profile_image else None
+                           } 
+                           for following in followings]
+        
+        response_data = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'phone': user.phone,
+            'profile_image': user.profile_image.url if user.profile_image else None,
+            'follower_count': followers.count(),
+            'following_count': followings.count(),
+            'liked_journals': response_like,
+            'write_comments': write_comments,
+            'followers': followers_data,
+            'followings': followings_data
+        }
+        
+        return response_data
+    
 
 @api_view(['POST', 'DELETE'])
 @login_required

@@ -101,8 +101,6 @@ class MovieJournalViewSet(ModelViewSet):
         # OpenAI API를 이용해 그림 생성
         self.create_ai_img()
         
-        # 이전에 추천된 영화 삭제
-        
         # 생성된 객체 직렬화
         movie_journal = TestSerializer(self.movie_journal).data
         # 영화 제목 추출(?)
