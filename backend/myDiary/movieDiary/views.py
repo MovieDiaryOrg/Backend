@@ -299,15 +299,15 @@ class MovieJournalViewSet(ModelViewSet):
             
 
     # 로그인한 사용자의 다이어리 목록 반환
-    @action(detail=False, methods=["GET"], url_path='(?P<user_pk>[^/.]+)/list')
+    @action(detail=False, methods=["GET"], url_path='list')
     # detail=False는 단일 객체가 아닌, 목록 조회용 메서드임을 나타냄
-    def user_journals(self, request, user_pk=None):
-        if user_pk:
-            journals = self.queryset.filter(user_id=user_pk)
-        else:
-            journals = self.queryset.filter(user=request.user)
-        serializer = self.get_serializer(journals, many=True)
+    def user_journals(self, request):
+        user = request.user
+        queryset = self.queryset.filter(user=user)
+        
+        serializer = self.get_serializer(queryset, many = True)
         return Response(serializer.data)
+    
     
 
 @login_required
