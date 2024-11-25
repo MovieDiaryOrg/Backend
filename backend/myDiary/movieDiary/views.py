@@ -155,14 +155,16 @@ class MovieJournalViewSet(ModelViewSet):
     
     @action(detail=False, methods=['get'], url_path='list')
     def journalList(self, request, *args, **kwargs):
-        print('list 호출됨')
+        user = request.user
+        
         # queryset 가져오기
         queryset = self.filter_queryset(
             self.get_queryset()
+            .filter(user=user)
             .select_related('movie')  # movie 관련 데이터 미리 로드
             .prefetch_related('likes', 'comments')  # 좋아요와 댓글 데이터 미리 로드
         )
-
+        
         # 페이지네이션 처리
         page = self.paginate_queryset(queryset)
         if page is not None:
