@@ -21,20 +21,22 @@ def mainPage(request):
         return Response({"message": "No liked journals found."}, status=404)
     
     movie_journal_id = most_liked['movie_journal_id']
-    movie = Movie.objects.filter(moviejournal__id=movie_journal_id).first()
+    print(f'movie_journal_id = {movie_journal_id}')
+    movie = Movie.objects.filter(movieJournal__id=movie_journal_id).first()
     
     if not movie:
         return Response({"message": "No movie found for the most liked journal."}, status=404)
 
     
     # 기록 목록 제공
-    movie_journals = MovieJournal.objects.all()
+    movie_journals = MovieJournal.objects.annotate(likes_count=Count('likes')).select_related('user', 'movie')
     movie_journal_serializer = TestSerializer(movie_journals, many=True)
     
     # 직렬화된 데이터를 가져온 뒤 각 감상문별 좋아요 수 추가
     movie_journal_data = movie_journal_serializer.data
     for journal in movie_journal_data:
         journal_id = journal['id']
+        journal_writer = journal['user']
         likes_count = LikedJournal.objects.filter(movie_journal_id=journal_id).count()  # 좋아요 수 계산
         journal['likes_count'] = likes_count  # 좋아요 수 추가
     
@@ -48,5 +50,15 @@ def mainPage(request):
             "vote_average": movie.vote_average,
             "liked_count": most_liked['count']    
         },
-        "movie_journals": movie_journal_data
+        "movie_journals" :
+        [  
+            { 
+             "user" : {
+                "id": journal_writer['id'],
+                "username": journal_writer['username']
+            },
+            "movie_journal": journal
+            } for journal in movie_journal_data
+        ] 
+        # "movie_journals": movie_journal_data
     })

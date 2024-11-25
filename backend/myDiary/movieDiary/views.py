@@ -153,8 +153,9 @@ class MovieJournalViewSet(ModelViewSet):
         
         return Response(data)  
     
+    # 나의 다이어리 목록 조회
     @action(detail=False, methods=['get'], url_path='list')
-    def journalList(self, request, *args, **kwargs):
+    def myJournalList(self, request, *args, **kwargs):
         user = request.user
         
         # queryset 가져오기
@@ -190,8 +191,47 @@ class MovieJournalViewSet(ModelViewSet):
                 'comments': journal.comments.count(),
             }
             for i, journal in enumerate(queryset)
-        ]
+        ]  
+        return Response(response_data)
+    
+    
+    # 특정 사용자의 다이어리 목록 조회
+    @action(detail=False, methods=['get'], url_path='<int:user_pk>/list')
+    def journalList(self, request, user_pk, *args, **kwargs):
+         # user_pk를 기반으로 필터링
+        queryset = self.filter_queryset(
+            self.get_queryset()
+            .filter(user_id=user_pk)  # 요청된 사용자 ID로 필터링
+            .select_related('movie')  # 관련 영화 정보 미리 로드
+            .prefetch_related('likes', 'comments')  # 좋아요 및 댓글 미리 로드
+        )
         
+        # 페이지네이션 처리
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            response_data = [
+                {
+                    'data': serializer.data[i],
+                    'title': journal.movie.title,
+                    'likes': journal.likes.count(),
+                    'comments': journal.comments.count(),
+                }
+                for i, journal in enumerate(page)
+            ]
+            return self.get_paginated_response(response_data)
+
+        # 페이지네이션이 없을 경우
+        serializer = self.get_serializer(queryset, many=True)
+        response_data = [
+            {
+                'data': serializer.data[i],
+                'title': journal.movie.title,
+                'likes': journal.likes.count(),
+                'comments': journal.comments.count(),
+            }
+            for i, journal in enumerate(queryset)
+        ]
         return Response(response_data)
     
     
