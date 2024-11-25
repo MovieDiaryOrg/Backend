@@ -152,13 +152,13 @@ if __name__ == '__main__':
     cnt = 1
 
     # 1. 장르 데이터 받아옴 (장르 더미 데이터 생성)
-    pull_genres()
+    # pull_genres()
     # 2. 한국 영화 데이터 받아옴 (더미 데이터 생성)
-    while cnt < 20:
+    while cnt < 400:
         pull_kr_movies(cnt)
         cnt += 1
     # 2-2. 외국 영화 데이터 받아옴 (더미 데이터 생성)
-    while cnt < 20:
+    while cnt < 400:
         pull_eng_movies(cnt)
         cnt += 1
 
