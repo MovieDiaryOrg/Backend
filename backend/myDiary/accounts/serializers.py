@@ -146,3 +146,8 @@ class CustomUserUpdateSerializer(UserDetailsSerializer):
         if instance.profile_image:
             ret['profile_image'] = self.context['request'].build_absolute_uri(instance.profile_image.url)
         return ret
+
+
+# class FollowSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = 

@@ -1,6 +1,6 @@
 from django.urls import path, include
 from . import views
-from .views import CustomUserUpdateView, UserDeleteView
+from .views import CustomUserUpdateView, UserDeleteView, UserDetailAPIView
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -15,5 +15,6 @@ urlpatterns = [
     path('user/delete/', UserDeleteView.as_view(), name='user_delete'),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('user/detail/', UserDetailAPIView.as_view(), name='user_detail'),
     path('<int:pk>/follow/', views.follow, name='follow'),
 ]
