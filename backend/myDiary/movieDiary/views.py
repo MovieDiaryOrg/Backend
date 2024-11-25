@@ -31,29 +31,7 @@ class MovieJournalViewSet(ModelViewSet):
         self.movie_journal = None
         self.movie_evaluation = None
         self.OPENAI_API_KEY = settings.OPENAI_API_KEY
-    
-    # 상세조회
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance)
 
-        data = serializer.data
-        movie_title = self.get_movie_title(data)
-        
-        # 댓글 직렬화
-        comments = instance.comments.all()  # 댓글 QuerySet 가져오기
-        comment_serializer = JournalCommentSerializer(comments, many=True)  # 다수의 객체 직렬화
-        
-        # 추천 영화 직렬화 (Recommended 모델 사용)
-        recommended_movies = instance.recommends.all()  # MovieJournal과 연결된 Recommended QuerySet
-        recommended_serializer = RecommendedMovieSerializer(recommended_movies, many=True)
-        
-        data['movie'] = movie_title
-        data['likes'] = instance.likes.count()
-        data['comments'] = comment_serializer.data  # 댓글 데이터를 JSON으로 추가
-        data['recommended'] = recommended_serializer.data
-        
-        return Response(data)
 
     # ModelViewSet 클래스가 상속받는 mixins.CreateModelMixin 클래스의 create() 오버라이딩
     def create(self, request, *args, **kwargs):
@@ -81,8 +59,28 @@ class MovieJournalViewSet(ModelViewSet):
         # OpenAI API를 이용해 그림 생성
         self.create_ai_img()
     
+        # 생성된 객체 직렬화
+        movie_journal = TestSerializer(self.movie_journal).data
+        
+        # data = serializer.data
+        # movie_title = self.get_movie_title(data)
+        
+        movie_title = self.get_movie_title(movie_journal)
+        
+        # 댓글 직렬화
+        comments = self.movie_journal.comments.all()  # 댓글 QuerySet 가져오기
+        comment_serializer = JournalCommentSerializer(comments, many=True)  # 다수의 객체 직렬화
+        
+        # 추천 영화 직렬화 (Recommended 모델 사용)
+        recommended_movies = self.movie_journal.recommends.all()  # MovieJournal과 연결된 Recommended QuerySet
+        recommended_serializer = RecommendedMovieSerializer(recommended_movies, many=True)
+                        
         response_data = {
-            'url': f'http://localhost:8000/movieDiary/{self.movie_journal.id}/'                   # 클라이언트가 상세페이지를 조회하기 위해 사용할 url만 반환함
+            'movie_journal': movie_journal,
+            'title': movie_title,
+            'likes' : self.movie_journal.likes.count(),
+            'comments': comment_serializer.data,
+            'recommended': recommended_serializer.data
         }
 
         headers = self.get_success_headers(response_data)
@@ -111,8 +109,29 @@ class MovieJournalViewSet(ModelViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
     
-    # def list(self, request, *args, **kwargs):
-    #     print(f'list_request = {request.data}')
+    
+    # 상세조회 (GET)
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+
+        data = serializer.data
+        movie_title = self.get_movie_title(data)
+        
+        # 댓글 직렬화
+        comments = instance.comments.all()  # 댓글 QuerySet 가져오기
+        comment_serializer = JournalCommentSerializer(comments, many=True)  # 다수의 객체 직렬화
+        
+        # 추천 영화 직렬화 (Recommended 모델 사용)
+        recommended_movies = instance.recommends.all()  # MovieJournal과 연결된 Recommended QuerySet
+        recommended_serializer = RecommendedMovieSerializer(recommended_movies, many=True)
+        
+        data['movie'] = movie_title
+        data['likes'] = instance.likes.count()
+        data['comments'] = comment_serializer.data  # 댓글 데이터를 JSON으로 추가
+        data['recommended'] = recommended_serializer.data
+        
+        return Response(data)
     
     # mixin.CreateModelMixin 클래스 내부 메소드 오버라이딩
     def perform_create(self, serializer):
