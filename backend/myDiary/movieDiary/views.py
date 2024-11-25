@@ -1,4 +1,5 @@
 # views.py
+import requests
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
@@ -13,7 +14,8 @@ from django.conf import settings
 from openai import OpenAI
 import json
 from django.core.exceptions import ValidationError
-from movies.serializers import MovieSerializer
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 
 """
 ModelViewSet은 기본적인 CRUD 작업을 제공하며, 
@@ -61,15 +63,8 @@ class MovieJournalViewSet(ModelViewSet):
     
         # 생성된 객체 직렬화
         movie_journal = TestSerializer(self.movie_journal).data
-        
-        # data = serializer.data
-        # movie_title = self.get_movie_title(data)
-        
+        # 영화 제목 추출(?)
         movie_title = self.get_movie_title(movie_journal)
-        
-        # 댓글 직렬화
-        comments = self.movie_journal.comments.all()  # 댓글 QuerySet 가져오기
-        comment_serializer = JournalCommentSerializer(comments, many=True)  # 다수의 객체 직렬화
         
         # 추천 영화 직렬화 (Recommended 모델 사용)
         recommended_movies = self.movie_journal.recommends.all()  # MovieJournal과 연결된 Recommended QuerySet
@@ -79,7 +74,6 @@ class MovieJournalViewSet(ModelViewSet):
             'movie_journal': movie_journal,
             'title': movie_title,
             'likes' : self.movie_journal.likes.count(),
-            'comments': comment_serializer.data,
             'recommended': recommended_serializer.data
         }
 
@@ -100,14 +94,38 @@ class MovieJournalViewSet(ModelViewSet):
         # MovieJournal 객체 업데이트
         self.movie_journal = serializer.save()
         print(f"MovieJournal 객체가 수정되었습니다: {self.movie_journal}")
-
+        
         # OpenAI API를 이용해 감상문 분석
         self.create_ai_analystic(self.movie_journal.content)
 
         # OpenAI API를 이용해 그림 생성
         self.create_ai_img()
+        
+        # 이전에 추천된 영화 삭제
+        
+        # 생성된 객체 직렬화
+        movie_journal = TestSerializer(self.movie_journal).data
+        # 영화 제목 추출(?)
+        movie_title = self.get_movie_title(movie_journal)
+        
+        # 댓글 직렬화
+        comments = self.movie_journal.comments.all()  # 댓글 QuerySet 가져오기
+        comment_serializer = JournalCommentSerializer(comments, many=True)  # 다수의 객체 직렬화
+        
+        # 추천 영화 직렬화 (Recommended 모델 사용)
+        recommended_movies = self.movie_journal.recommends.all()  # MovieJournal과 연결된 Recommended QuerySet
+        recommended_serializer = RecommendedMovieSerializer(recommended_movies, many=True)
+                        
+        response_data = {
+            'movie_journal': movie_journal,
+            'title': movie_title,
+            'likes' : self.movie_journal.likes.count(),
+            'comments': comment_serializer.data,
+            'recommended': recommended_serializer.data
+        }
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        headers = self.get_success_headers(response_data)
+        return Response(response_data, status=status.HTTP_200_OK, headers=headers)
     
     
     # 상세조회 (GET)
@@ -137,6 +155,7 @@ class MovieJournalViewSet(ModelViewSet):
     def perform_create(self, serializer):
         return serializer.save()
 
+
     def get_movie_title(self, data):
         to_slice = data['movie']
         position = to_slice.find('(')
@@ -145,6 +164,7 @@ class MovieJournalViewSet(ModelViewSet):
         title = Movie.objects.get(tmdb_id=movie_id).title
         
         return title
+        
         
     def create_ai_analystic(self, content):
         """
@@ -227,6 +247,10 @@ class MovieJournalViewSet(ModelViewSet):
         self.dalle_prompt = made_prompt
 
         # recommended 객체 생성
+        # 만약 이전에 생성된 내역이 있다면, 삭제
+        if Recommended.objects.filter(movie_journal_id=self.movie_journal).exists():
+            Recommended.objects.filter(movie_journal_id=self.movie_journal).delete()
+        
         for recommend in movie_recommend:
             movie = Movie.objects.filter(title=recommend['title'])
             if movie:
@@ -238,6 +262,7 @@ class MovieJournalViewSet(ModelViewSet):
             
             recommended = Recommended(movie=movie[0], movie_journal=self.movie_journal, reason=reason)
             recommended.save()
+            
 
     def create_ai_img(self):
         """
@@ -251,10 +276,27 @@ class MovieJournalViewSet(ModelViewSet):
             quality="hd",
             n=1
         )
+        
+        ai_image_url = str(response.data[0].url)
+        
+        # 이미지 다운로드
+        try:
+            image_response = requests.get(ai_image_url)
+            image_response.raise_for_status()  # HTTP 요청 에러 처리
 
-        ai_image_url = response.data[0].url
-        self.movie_journal.ai_img = ai_image_url
-        self.movie_journal.save()               # 수정사항 저장
+            # 파일로 저장 (media/ai_images/ 폴더에 저장)
+            image_name = f"ai_image_{self.movie_journal.id}.png"  # 고유한 파일 이름 지정
+            file_path = f"ai_images/{image_name}"
+            saved_path = default_storage.save(file_path, ContentFile(image_response.content))
+
+            # MovieJournal의 ai_img 필드에 경로 저장
+            self.movie_journal.ai_img = saved_path
+            self.movie_journal.save()
+            
+            print(f"이미지가 저장되었습니다: {saved_path}")
+        except requests.RequestException as e:
+            print(f"이미지 다운로드 중 오류 발생: {e}")
+            
 
     # 로그인한 사용자의 다이어리 목록 반환
     @action(detail=False, methods=["GET"], url_path='(?P<user_pk>[^/.]+)/list')
