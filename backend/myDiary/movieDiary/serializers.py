@@ -16,14 +16,21 @@ class TestSerializer(serializers.ModelSerializer):
     # 필드는 존재하나 값을 입력받지 않도록 하고 싶으면 ModelSerializer의 필드에만 포함시키면 됨
     content = serializers.CharField()
     watched_date = serializers.DateField()
+    user = serializers.SerializerMethodField()
     movie = serializers.CharField()
     evaluation = serializers.DecimalField(max_digits=3, decimal_places=2)
 
     class Meta:
         model = MovieJournal  # 어떤 모델을 기반으로 하는지 지정 -> 왜 꼭 해야하지?
-        fields = ['id', 'content', 'watched_date', 'created_at', 'modified_at', 'movie', 'ai_img', 'evaluation']  # 포함할 필드 명시
+        fields = ['id', 'content', 'watched_date', 'created_at', 'modified_at', 'movie', 'user', 'ai_img', 'evaluation']  # 포함할 필드 명시
         read_only_fields = ['id', 'created_at', 'modified_at', 'ai_img']
-
+    
+    def get_user(self, obj):
+        return {
+            "id": obj.user.id,
+            "username": obj.user.username,
+        }
+    
     # save() 메서드 실행 시 자동으로 호출됨
     def create(self, validated_data):
         print(f"validated_data = {validated_data['movie']}")
