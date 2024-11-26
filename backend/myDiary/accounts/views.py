@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from .serializers import UserRegisterSerializer, UserLoginSerializer
+from .serializers import UserRegisterSerializer, UserLoginSerializer, UserInfoSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from dj_rest_auth.views import UserDetailsView
 from .serializers import CustomUserUpdateSerializer
@@ -236,7 +236,26 @@ class UserDetailAPIView(APIView):
 class UserInfoView(APIView):
     permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        # 현재 요청을 보낸 사용자의 정보를 가져옴
+        user = request.user
 
+        # full_name 생성: last_name + first_name
+        # full_name = f"{user.last_name}{user.first_name}"
+
+        # 사용자 정보를 직렬화
+        serializer = UserInfoSerializer({
+            'id': user.id,
+            'username': user.username,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email,
+            'phone': user.phone,
+            'profile_image': user.profile_image.url if user.profile_image else None,
+        })
+
+        # 직렬화된 데이터를 반환
+        return Response(serializer.data)
 
 
 @api_view(['POST', 'DELETE'])

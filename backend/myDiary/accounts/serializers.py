@@ -140,3 +140,13 @@ class CustomUserUpdateSerializer(UserDetailsSerializer):
         if instance.profile_image:
             ret['profile_image'] = self.context['request'].build_absolute_uri(instance.profile_image.url)
         return ret
+
+
+class UserInfoSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    username = serializers.CharField(read_only=True)
+    first_name = serializers.CharField(read_only=True)
+    second_name = serializers.CharField(read_only=True)
+    email = serializers.EmailField(read_only=True)
+    phone = serializers.CharField(read_only=True)
+    profile_image = serializers.ImageField(read_only=True)
