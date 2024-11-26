@@ -34,16 +34,7 @@ def mainPage(request):
     movie_journals = MovieJournal.objects.annotate(likes_count=Count('likes')).select_related('user', 'movie')
     movie_journal_serializer = TestSerializer(movie_journals, many=True)
     
-    # 직렬화된 데이터를 가져온 뒤 각 감상문별 좋아요 수 추가
-    movie_journal_data = movie_journal_serializer.data
-    for journal in movie_journal_data:
-        journal_id = journal['id']
-        journal_title = find_movie_title(journal['movie'])
-        likes_count = LikedJournal.objects.filter(movie_journal_id=journal_id).count()  # 좋아요 수 계산
-        journal['likes_count'] = likes_count  # 좋아요 수 추가
-    
-    
-    return Response({
+    response_data = {
         "popular_movie":{
             "tmdb_id": movie.tmdb_id,
             "title": movie.title,
@@ -54,15 +45,23 @@ def mainPage(request):
             "vote_average": movie.vote_average,
             "liked_count": most_liked['count'],
         },
-        "movie_journals" :
-        [  
-            { 
-                "title": journal_title,
-                "movie_journal": journal
-            } for journal in movie_journal_data
-        ] 
-        # "movie_journals": movie_journal_data
-    })
+        "movie_journals": []
+    }
+    
+    # 직렬화된 데이터를 가져온 뒤 각 감상문별 좋아요 수 추가
+    movie_journal_data = movie_journal_serializer.data
+    for journal in movie_journal_data:
+        journal_id = journal['id']
+        journal_title = find_movie_title(journal['movie'])
+        likes_count = LikedJournal.objects.filter(movie_journal_id=journal_id).count()  # 좋아요 수 계산
+        journal['likes_count'] = likes_count  # 좋아요 수 추가
+        
+        response_data["movie_journals"].append({ 
+            "title": journal_title,
+            "movie_journal": journal
+        })
+    
+    return Response(response_data)
 
 
 def find_movie_title(movieObj):
