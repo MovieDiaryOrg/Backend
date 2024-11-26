@@ -18,6 +18,6 @@ class Genre(models.Model):
 
 
 class MovieGenre(models.Model):
-    movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
-    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='movie_genre')
+    genre = models.ForeignKey(Genre, on_delete=models.CASCADE, related_name='movie_genre')
 

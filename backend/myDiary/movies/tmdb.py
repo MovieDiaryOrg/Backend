@@ -26,12 +26,11 @@ movie_genre = []
 
 # 장르 데이터 받아오는 함수
 def pull_genres():
-    url = "https://api.themoviedb.org/3/genre/movie/list"
+    url = "https://api.themoviedb.org/3/genre/movie/list?language=ko-KR"
 
     headers = {
         "accept": "application/json",
         "Authorization": "Bearer " + api_key,
-        "language": "ko-KR"
     }
 
     response = requests.get(url, headers=headers)
@@ -152,20 +151,20 @@ if __name__ == '__main__':
     cnt = 1
 
     # 1. 장르 데이터 받아옴 (장르 더미 데이터 생성)
-    # pull_genres()
+    pull_genres()
     # 2. 한국 영화 데이터 받아옴 (더미 데이터 생성)
-    while cnt < 400:
-        pull_kr_movies(cnt)
-        cnt += 1
+    # while cnt < 400:
+    #     pull_kr_movies(cnt)
+    #     cnt += 1
     # 2-2. 외국 영화 데이터 받아옴 (더미 데이터 생성)
-    while cnt < 400:
-        pull_eng_movies(cnt)
-        cnt += 1
+    # while cnt < 400:
+    #     pull_eng_movies(cnt)
+    #     cnt += 1
 
-    with open('./fixtures/movies.json', 'w', encoding='utf-8') as f:
-        # json.dump: Python 객체를 JSON 형식으로 변환하여 파일에 저장하는 함수
-        json.dump(movies, f, ensure_ascii=False, indent=4)
+    # with open('./fixtures/movies.json', 'w', encoding='utf-8') as f:
+    #     # json.dump: Python 객체를 JSON 형식으로 변환하여 파일에 저장하는 함수
+    #     json.dump(movies, f, ensure_ascii=False, indent=4)
 
-    with open('./fixtures/movie_genre.json', 'w', encoding='utf-8') as f:
-        # json.dump: Python 객체를 JSON 형식으로 변환하여 파일에 저장하는 함수
-        json.dump(movie_genre, f, ensure_ascii=False, indent=4)
+    # with open('./fixtures/movie_genre.json', 'w', encoding='utf-8') as f:
+    #     # json.dump: Python 객체를 JSON 형식으로 변환하여 파일에 저장하는 함수
+    #     json.dump(movie_genre, f, ensure_ascii=False, indent=4)

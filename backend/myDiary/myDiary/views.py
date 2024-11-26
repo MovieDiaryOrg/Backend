@@ -18,7 +18,7 @@ def mainPage(request):
     )
     
     if not most_liked:
-        movie = Movie.objects.filter(tmdb_id=129).first()
+        movie = Movie.objects.filter(tmdb_id=693134).first()
         most_liked = {
             'count': 0
         }
@@ -46,11 +46,12 @@ def mainPage(request):
         "popular_movie":{
             "tmdb_id": movie.tmdb_id,
             "title": movie.title,
-            "poster_path": movie.poster_path,
+            "genre": [genre.genre.name for genre in movie.movie_genre.all()],  # 수정된 장르 처리
+            "image": movie.poster_path,
             "description": movie.description,
             "release_date": movie.release_date,
             "vote_average": movie.vote_average,
-            "liked_count": most_liked['count']    
+            "liked_count": most_liked['count'],
         },
         "movie_journals" :
         [  
