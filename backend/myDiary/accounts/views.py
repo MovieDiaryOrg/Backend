@@ -232,7 +232,12 @@ class UserDetailAPIView(APIView):
         }
         
         return response_data
-    
+
+class UserInfoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+
+
 
 @api_view(['POST', 'DELETE'])
 @login_required
