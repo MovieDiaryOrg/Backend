@@ -38,9 +38,10 @@ def mainPage(request):
     movie_journal_data = movie_journal_serializer.data
     for journal in movie_journal_data:
         journal_id = journal['id']
-        journal_writer = journal['user']
+        journal_title = find_movie_title(journal['movie'])
         likes_count = LikedJournal.objects.filter(movie_journal_id=journal_id).count()  # 좋아요 수 계산
         journal['likes_count'] = likes_count  # 좋아요 수 추가
+    
     
     return Response({
         "popular_movie":{
@@ -56,12 +57,17 @@ def mainPage(request):
         "movie_journals" :
         [  
             { 
-             "user" : {
-                "id": journal_writer['id'],
-                "username": journal_writer['username']
-            },
-            "movie_journal": journal
+                "title": journal_title,
+                "movie_journal": journal
             } for journal in movie_journal_data
         ] 
         # "movie_journals": movie_journal_data
     })
+
+
+def find_movie_title(movieObj):
+    start = movieObj.find("(")
+    movie_id = int(movieObj[start + 1:-1])
+    
+    find_movie = Movie.objects.get(pk=movie_id)
+    return find_movie.title
