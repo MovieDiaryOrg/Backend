@@ -9,6 +9,7 @@ from django.contrib.auth.decorators import login_required
 from .serializers import TestSerializer, JournalCommentSerializer, RecommendedMovieSerializer
 from rest_framework.permissions import IsAuthenticated
 from .models import MovieJournal, Recommended, LikedJournal, JournalComment
+from accounts.models import CustomUser
 from movies.models import Movie
 from django.conf import settings
 from openai import OpenAI
@@ -216,6 +217,7 @@ class MovieJournalViewSet(ModelViewSet):
                     'title': journal.movie.title,
                     'likes': journal.likes.count(),
                     'comments': journal.comments.count(),
+                    'user_first_name': CustomUser.objects.get(pk=serializer.data[i]['user']['id']).first_name
                 }
                 for i, journal in enumerate(page)
             ]
@@ -229,6 +231,7 @@ class MovieJournalViewSet(ModelViewSet):
                 'title': journal.movie.title,
                 'likes': journal.likes.count(),
                 'comments': journal.comments.count(),
+                'user_first_name': CustomUser.objects.get(pk=serializer.data[i]['user']['id']).first_name
             }
             for i, journal in enumerate(queryset)
         ]
