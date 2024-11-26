@@ -17,6 +17,8 @@ import json
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
+from rest_framework.decorators import permission_classes
+
 
 """
 ModelViewSet은 기본적인 CRUD 작업을 제공하며, 
@@ -397,10 +399,15 @@ def createLike(request, journal_pk):
 
     return JsonResponse({"message": message})
 
+@permission_classes([IsAuthenticated])
+@api_view(['GET'])
+def retreiveJorunalComments(request, journal_pk):
+    comments = MovieJournal.objects.get(pk=journal_pk).comments.all()
 
+    return JsonResponse({"comments": comments})
 
-@login_required
-@api_view(['POST', 'PATCH'])
+@permission_classes([IsAuthenticated])
+@api_view(['POST', 'GET'])
 def createJournalComment(request, journal_pk):
     movie_journal = MovieJournal.objects.get(pk=journal_pk)
     if request.method == 'POST':
@@ -410,17 +417,25 @@ def createJournalComment(request, journal_pk):
             movie_journal = movie_journal
         )
         message = "Create comment successfully!"
-    elif request.method == 'PATCH':
-        journalComment = JournalComment.objects.get(user=request.user, movie_journal=movie_journal)
+        return JsonResponse({"message": message})
+    elif request.method == 'GET':
+        comments = MovieJournal.objects.get(pk=journal_pk).comments.all()
+        return JsonResponse({"comments": JournalCommentSerializer(comments, many=True).data})
+
+    
+
+@permission_classes([IsAuthenticated])
+@api_view(['DELETE', 'PUT'])
+def deleteJournalComment(request, comment_pk):
+    if request.method == 'DELETE':
+        journalComment = JournalComment.objects.get(pk=comment_pk)
+        journalComment.delete()
+        return JsonResponse({"message": "Delete comment successfully."})
+    
+    elif request.method == 'PUT':
+        journalComment = JournalComment.objects.get(pk=comment_pk)
         journalComment.content = request.data['content']
         journalComment.save()
         message = "Modify comment successfully."
-    return JsonResponse({"message": message})
-
-@login_required
-@api_view(['DELETE'])
-def deleteJournalComment(request, comment_pk):
-    journalComment = JournalComment.objects.get(pk=comment_pk)
-    journalComment.delete()
-    return JsonResponse({"message": "Delete comment successfully."})
+        return JsonResponse({"message": message})
     

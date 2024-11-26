@@ -14,7 +14,7 @@ custom_urlpatterns = [
     path('<int:user_pk>/list/', MovieJournalViewSet.as_view({'get': 'journalList'}), name='journalList'),
     path('<int:journal_pk>/like/', views.createLike, name='createLike'),
     path('<int:journal_pk>/comment/', views.createJournalComment, name='createJournalComment'),
-    path('<int:comment_pk>/comment/delete/', views.deleteJournalComment, name='deleteJournalComment')
+    path('<int:comment_pk>/comment/edit/', views.deleteJournalComment, name='deleteJournalComment')
 ]
 
 urlpatterns = router.urls + custom_urlpatterns
