@@ -8,7 +8,7 @@ from django.db.models import Count
 
 @api_view(['GET'])
 def mainPage(request): 
-    # 오늘의 영화 반환
+    # 오늘의 영화 반환 (좋아요를 가장 많이 받은 게시물의 영화)
     most_liked = (
         LikedJournal.objects
         .values('movie_journal_id')  # movie_journal_id 기준 그룹화
@@ -18,15 +18,17 @@ def mainPage(request):
     )
     
     if not most_liked:
-        return Response({"message": "No liked journals found."}, status=404)
-    
-    movie_journal_id = most_liked['movie_journal_id']
-    print(f'movie_journal_id = {movie_journal_id}')
-    movie = Movie.objects.filter(movieJournal__id=movie_journal_id).first()
+        movie = Movie.objects.filter(tmdb_id=129).first()
+        most_liked = {
+            'count': 0
+        }
+    else:
+        movie_journal_id = most_liked['movie_journal_id']
+        print(f'movie_journal_id = {movie_journal_id}')
+        movie = Movie.objects.filter(movieJournal__id=movie_journal_id).first()
     
     if not movie:
         return Response({"message": "No movie found for the most liked journal."}, status=404)
-
     
     # 기록 목록 제공
     movie_journals = MovieJournal.objects.annotate(likes_count=Count('likes')).select_related('user', 'movie')
