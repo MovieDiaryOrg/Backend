@@ -73,10 +73,17 @@ class TestSerializer(serializers.ModelSerializer):
     
 
 class JournalCommentSerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField()
     class Meta:
         model = JournalComment
-        fields = ['id', 'content', 'user', 'created_at']  # 필요한 필드만 포함
+        fields = ['id', 'content', 'user', 'created_at', 'username']  # 필요한 필드만 포함
         
+    def get_username(self, obj):
+        return {
+            "profile_image": obj.user.profile_image.url if obj.user.profile_image else None,  # URL로 변환
+            "username": obj.user.username,
+        }
+
 
 class RecommendedMovieSerializer(serializers.ModelSerializer):
     # Movie 데이터를 직렬화함

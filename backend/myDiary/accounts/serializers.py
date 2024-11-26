@@ -28,13 +28,7 @@ class UserRegisterSerializer(RegisterSerializer):
         # 비밀번호 확인 및 추가 검증 로직
         if data['password1'] != data['password2']:
             raise serializers.ValidationError({"password": "비밀번호가 일치하지 않습니다."})
-        
-        # image = data.get('profile_image')
-        # if image and image.size > 5 * 1024 * 1024: 
-        #     raise serializers.ValidationError({
-        #         "image": "이미지 파일은 5MB 이하로 업로드 가능합니다."
-        #     })
-        
+
         """
         부모 클래스의 validate 메서드 호출 결과를 반환
         (validate 메서드가 부모 클래스에서 정의한 기본 검증 로직을 유지하면서 추가적인 검증 로직을 더할 때 사용)
@@ -146,8 +140,3 @@ class CustomUserUpdateSerializer(UserDetailsSerializer):
         if instance.profile_image:
             ret['profile_image'] = self.context['request'].build_absolute_uri(instance.profile_image.url)
         return ret
-
-
-# class FollowSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = 
